@@ -1,0 +1,21 @@
+{
+  "name": "Terkko's Billiard's Club",
+  "short_name": "Terkko's Billar",
+  "start_url": "/terkkos/",
+  "display": "standalone",
+  "background_color": "#fbff14",
+  "theme_color": "#fbff14",
+  "description": "Control de Mesas de Billar - Terkko's Billiard's Club",
+  "icons": [
+    {
+      "src": "img/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
