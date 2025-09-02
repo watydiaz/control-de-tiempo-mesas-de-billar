@@ -29,7 +29,6 @@ for ($i = 1; $i <= 4; $i++) {
             <input type="hidden" name="accion" value="iniciar">
             <button type="submit" class="btn-iniciar">Iniciar Tiempo</button>
         </form>
-        <button class="btn-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fffbe6;color:#111;border:2px solid #fbff14;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-bottom:6px;">Ver pedidos</button>
     <?php else: ?>
         <div>Inicio: <?php echo date("g:i:s A", strtotime($m['hora_inicio'])); ?></div>
         <div class="contador" id="contador_<?php echo $i; ?>">00:00:00</div>
@@ -42,7 +41,6 @@ for ($i = 1; $i <= 4; $i++) {
             <input type="hidden" name="accion" value="parar">
             <button type="submit" class="btn-parar">Parar Tiempo</button>
         </form>
-        <button class="btn-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fffbe6;color:#111;border:2px solid #fbff14;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-bottom:6px;">Ver pedidos</button>
     <?php endif; ?>
     <?php if ($m && $m['hora_fin']): ?>
         <div>Fin: <?php echo date("g:i:s A", strtotime($m['hora_fin'])); ?></div>

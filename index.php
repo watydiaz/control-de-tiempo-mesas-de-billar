@@ -83,6 +83,8 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
         <script src="assets/js/mesas.js"></script>
         <script src="assets/js/filtros.js"></script>
         <script src="assets/js/historial.js"></script>
+    <script src="assets/js/boton-flotante.js"></script>
+    <link rel="stylesheet" href="assets/css/boton-flotante.css">
     </head>
 <body>
     <header>
@@ -120,7 +122,6 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
                 <input type="hidden" name="accion" value="iniciar">
                 <button type="submit" class="btn-iniciar">Iniciar Tiempo</button>
             </form>
-            <button class="btn-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fffbe6;color:#111;border:2px solid #fbff14;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-bottom:6px;">Ver pedidos</button>
         <?php else: ?>
             <div>Inicio: <?php echo date("g:i:s A", strtotime($m['hora_inicio'])); ?></div>
             <div class="contador" id="contador_<?php echo $i; ?>">00:00:00</div>
@@ -133,8 +134,9 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
                 <input type="hidden" name="accion" value="parar">
                 <button type="submit" class="btn-parar">Parar Tiempo</button>
             </form>
-            <button class="btn-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fffbe6;color:#111;border:2px solid #fbff14;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-bottom:6px;">Ver pedidos</button>
         <?php endif; ?>
+        <button type="button" class="btn-ver-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fbff14;color:#222;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-top:8px;">Ver pedidos</button>
+        <button type="button" class="btn-crear-ronda" data-mesa="<?php echo $i; ?>" style="background:#2ecc40;color:#fff;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-top:8px;">Crear ronda/pedido</button>
         <?php if ($m && $m['hora_fin']): ?>
             <div>Fin: <?php echo date("g:i:s A", strtotime($m['hora_fin'])); ?></div>
             <div>Minutos: <?php echo $m['minutos']; ?></div>
@@ -233,15 +235,64 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
             <!-- Aquí se mostrará la venta total -->
         </div>
     </div>
-    <!-- Modal de pedidos por mesa -->
-    <div id="modalPedidos" class="modal-pedidos" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
-        <div class="modal-content" style="background:#fffbe6;padding:32px 24px;border-radius:12px;max-width:420px;width:90vw;box-shadow:0 2px 18px #fbff14;position:relative;">
-            <button id="cerrarModalPedidos" style="position:absolute;top:12px;right:12px;background:#fbff14;border:none;border-radius:50%;width:32px;height:32px;font-size:1.3em;font-weight:bold;cursor:pointer;">&times;</button>
-            <h3 style="color:#111;margin-bottom:18px;">Pedidos por rondas - Mesa <span id="modalMesaNum"></span></h3>
-            <div id="modalPedidosLista" style="min-height:80px;color:#111;font-size:1.08em;">No hay pedidos registrados aún.</div>
-            <!-- Aquí se mostrarán los pedidos por rondas -->
+        <!-- Modal para crear pedido -->
+        <div id="modalCrearPedido" class="modal-pedidos" style="display:none;">
+          <div class="modal-content" style="width:90%;min-width:220px;max-width:98vw;max-height:80vh;overflow-y:auto;">
+            <button id="cerrarModalCrearPedido">&times;</button>
+            <h3>Crear pedido / ronda</h3>
+            <form id="formCrearPedido">
+              <div style="margin-bottom:14px;">
+                <label style="font-weight:bold;">Mesa:</label>
+                <input type="text" id="inputMesaSeleccionada" name="mesa" readonly style="background:#eee;font-weight:bold;" />
+              </div>
+              <div style="margin-bottom:14px;">
+                <label for="inputCliente" style="font-weight:bold;">Cliente:</label>
+                <input type="text" id="inputCliente" name="cliente" maxlength="100" placeholder="Nombre del cliente" autocomplete="off">
+              </div>
+              <div style="margin-bottom:14px;">
+                <label for="inputObservaciones" style="font-weight:bold;">Observaciones:</label>
+                <textarea id="inputObservaciones" name="observaciones" rows="2" maxlength="255" placeholder="Observaciones del pedido" style="resize:vertical;"></textarea>
+              </div>
+              <h4 style="margin-bottom:8px;">Productos de la ronda</h4>
+              <div style="overflow-x:auto;">
+                <table id="tablaProductosRonda">
+                  <thead>
+                    <tr>
+                      <th style="min-width:120px;">Producto</th>
+                      <th style="min-width:70px;">Cantidad</th>
+                      <th style="min-width:80px;">Precio</th>
+                      <th style="min-width:90px;">Subtotal</th>
+                      <th style="width:32px;"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- Filas de productos se agregan dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+              <button type="button" id="agregarProductoRonda">Agregar producto</button>
+              <div style="margin-top:14px;font-size:1.13em;font-weight:bold;text-align:right;">Total ronda: $<span id="totalRonda">0</span></div>
+              <button type="submit">Confirmar pedido</button>
+            </form>
+          </div>
         </div>
-    </div>
+        <!-- Modal para mostrar pedidos de la mesa -->
+        <div id="modalPedidosMesa" class="modal-pedidos" style="display:none;">
+          <div class="modal-content" style="width:90%;min-width:220px;max-width:98vw;max-height:80vh;overflow-y:auto;">
+            <button id="cerrarModalPedidosMesa" type="button" style="float:right;font-size:1.5em;">&times;</button>
+            <h3>Pedidos de la mesa <span id="modalPedidosMesaNum"></span></h3>
+            <div id="modalPedidosMesaLista">Cargando...</div>
+            <div style="margin-top:14px;font-size:1.13em;font-weight:bold;text-align:right;">Costo parcial: $<span id="modalPedidosMesaTotal">0</span></div>
+          </div>
+        </div>
+        <!-- Modal para mostrar detalle de productos de un pedido -->
+        <div id="modalDetallePedido" class="modal-pedidos" style="display:none;">
+          <div class="modal-content" style="width:90%;min-width:220px;max-width:98vw;max-height:80vh;overflow-y:auto;">
+            <button id="cerrarModalDetallePedido" type="button" style="float:right;font-size:1.5em;">&times;</button>
+            <h3>Detalle de productos</h3>
+            <div id="modalDetallePedidoLista">Cargando...</div>
+          </div>
+        </div>
     <!-- JS modularizado: main.js, mesas.js, filtros.js, historial.js -->
     <footer class="sticky-footer">
         Desarrollado por Karol Diaz - Diaztecnologia | Todos los derechos reservados &copy; 2025
