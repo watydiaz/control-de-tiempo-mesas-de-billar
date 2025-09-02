@@ -77,7 +77,13 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
     <link rel="stylesheet" href="assets/css/mesas.css">
     <link rel="stylesheet" href="assets/css/filtros.css">
     <link rel="stylesheet" href="assets/css/historial.css">
-</head>
+        <!-- Enlaces a los JS modularizados -->
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="assets/js/main.js"></script>
+        <script src="assets/js/mesas.js"></script>
+        <script src="assets/js/filtros.js"></script>
+        <script src="assets/js/historial.js"></script>
+    </head>
 <body>
     <header>
         <div class="header-logo">
@@ -105,7 +111,7 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
         $clase = $en_uso ? 'activa' : 'inactiva';
         $img = $imagenes_mesas[$i];
     ?>
-    <div class="mesa <?php echo $clase; ?>">
+    <div class="mesa <?php echo $clase; ?>"<?php if ($en_uso) echo ' data-hora-inicio="' . htmlspecialchars($m['hora_inicio']) . '"'; ?>>
         <h3>Mesa <?php echo $i; ?></h3>
         <img src="<?php echo htmlspecialchars($img); ?>" alt="Imagen Mesa <?php echo $i; ?>">
         <?php if (!$en_uso): ?>
@@ -126,27 +132,7 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
                 <input type="hidden" name="accion" value="parar">
                 <button type="submit" class="btn-parar">Parar Tiempo</button>
             </form>
-            <script>
-            // Contador y costo en tiempo real
-            (function(){
-                var inicio = new Date("<?php echo $m['hora_inicio']; ?>").getTime();
-                function actualizar() {
-                    var ahora = new Date().getTime();
-                    var diff = Math.floor((ahora - inicio)/1000);
-                    var h = Math.floor(diff/3600);
-                    var m = Math.floor((diff%3600)/60);
-                    var s = diff%60;
-                    document.getElementById('contador_<?php echo $i; ?>').textContent =
-                        (h<10?'0':'')+h+":"+(m<10?'0':'')+m+":"+(s<10?'0':'')+s;
-                    // Calcular costo actual
-                    var minutos = diff / 60;
-                    var costo = Math.round(minutos * 7000 / 60);
-                    document.getElementById('costo_<?php echo $i; ?>').textContent = costo.toLocaleString('es-CO');
-                }
-                actualizar();
-                setInterval(actualizar, 1000);
-            })();
-            </script>
+            <!-- El contador y costo en tiempo real se moverán a mesas.js -->
         <?php endif; ?>
         <?php if ($m && $m['hora_fin']): ?>
             <div>Fin: <?php echo date("g:i:s A", strtotime($m['hora_fin'])); ?></div>
@@ -159,70 +145,50 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
     <?php endfor; ?>
     </div>
     <div class="filtros">
-        <form method="get">
-            <label>Desde: <input type="date" name="fecha_inicio" id="fecha_inicio" value="<?php echo htmlspecialchars($fecha_inicio); ?>"></label>
-            <label>Hasta: <input type="date" name="fecha_fin" id="fecha_fin" value="<?php echo htmlspecialchars($fecha_fin); ?>"></label>
-            <button type="submit">Filtrar</button>
-            <a href="index.php"><button type="button">Hoy</button></a>
-            <button type="button" id="btnMes" style="background:#fbff14;color:#111;border:none;border-radius:5px;padding:6px 16px;font-size:1em;margin-left:8px;cursor:pointer;">Mes</button>
-            <span id="mesSelector" style="display:none;">
-                <select id="selectAnio" style="font-size:1em;padding:2px 6px;margin-left:6px;"></select>
-                <select id="selectMes" style="font-size:1em;padding:2px 6px;margin-left:2px;">
-                    <option value="">Mes</option>
-                    <option value="01">Enero</option>
-                    <option value="02">Febrero</option>
-                    <option value="03">Marzo</option>
-                    <option value="04">Abril</option>
-                    <option value="05">Mayo</option>
-                    <option value="06">Junio</option>
-                    <option value="07">Julio</option>
-                    <option value="08">Agosto</option>
-                    <option value="09">Septiembre</option>
-                    <option value="10">Octubre</option>
-                    <option value="11">Noviembre</option>
-                    <option value="12">Diciembre</option>
-                </select>
-            </span>
+        <form method="get" class="filtros-form bg-light p-3 rounded shadow-sm d-flex flex-wrap align-items-center justify-content-center gap-3" style="max-width:700px;margin:0 auto 18px auto;">
+            <div class="filtros-leyenda text-center mb-3 p-2 rounded" style="font-size:1.08em;color:#111;font-weight:500;background:#fffbe6;border:1px solid #fbff14;box-shadow:0 1px 6px #fbff14;max-width:95%;margin:0 auto 10px auto;">
+                Utiliza los filtros para ver registros por fecha, día, mes o año.<br>
+                Elige un rango de fechas y dale filtrar o usa los botones rápidos para ver los registros de <b>Hoy</b>/<b>Ayer</b>, o selecciona un mes específico con el botón <b>Mes</b>, y luego dale filtrar.
+            </div>
+            <div class="filtro-fecha d-flex flex-column align-items-start">
+                <label for="fecha_inicio" class="fw-bold mb-1">Desde</label>
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="form-control" value="<?php echo htmlspecialchars($fecha_inicio); ?>">
+            </div>
+            <div class="filtro-fecha d-flex flex-column align-items-start">
+                <label for="fecha_fin" class="fw-bold mb-1">Hasta</label>
+                <input type="date" name="fecha_fin" id="fecha_fin" class="form-control" value="<?php echo htmlspecialchars($fecha_fin); ?>">
+            </div>
+            <div class="d-flex flex-column align-items-center w-100 justify-content-center" style="margin-bottom:10px;">
+                <button type="submit" class="btn btn-warning fw-bold btn-filtrar" style="box-shadow:0 2px 12px #fbff14; font-size:1.15em; padding:12px 36px; border-width:3px;">Filtrar</button>
+            </div>
+            <div class="btn-group justify-content-center align-items-center w-100" style="margin-bottom:10px; display:flex;">
+                <a href="index.php" class="btn btn-outline-dark fw-bold">Hoy</a>
+                <button type="button" id="btnAyer" class="btn btn-outline-dark fw-bold">Ayer</button>
+                <button type="button" id="btnMes" class="btn btn-info fw-bold">Mes</button>
+            </div>
+            <div class="mes-selector-container d-flex flex-column align-items-center justify-content-center w-100" style="margin-bottom:10px;">
+                <span id="mesSelector" style="display:none;">
+                    <div class="d-flex flex-row align-items-center justify-content-center gap-2" style="margin:0 auto;">
+                        <select id="selectAnio" class="form-select mb-1" style="min-width:90px;"></select>
+                        <select id="selectMes" class="form-select" style="min-width:90px;">
+                            <option value="">Mes</option>
+                            <option value="01">Enero</option>
+                            <option value="02">Febrero</option>
+                            <option value="03">Marzo</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Mayo</option>
+                            <option value="06">Junio</option>
+                            <option value="07">Julio</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                </span>
+            </div>
         </form>
-        <script>
-        // Selector de año dinámico (últimos 5 años y actual)
-        (function(){
-            var anioSel = document.getElementById('selectAnio');
-            if (!anioSel) return;
-            var actual = new Date().getFullYear();
-            for (var y = actual; y >= actual-5; y--) {
-                var opt = document.createElement('option');
-                opt.value = y;
-                opt.textContent = y;
-                anioSel.appendChild(opt);
-            }
-        })();
-        // Mostrar/ocultar selector de mes
-        document.getElementById('btnMes').onclick = function() {
-            var ms = document.getElementById('mesSelector');
-            ms.style.display = ms.style.display === 'inline' ? 'none' : 'inline';
-        };
-        // Al seleccionar año y mes, poner fechas en los inputs
-        document.getElementById('selectMes').onchange = document.getElementById('selectAnio').onchange = function() {
-            var anio = document.getElementById('selectAnio').value;
-            var mes = document.getElementById('selectMes').value;
-            if (anio && mes) {
-                var primerDia = anio + '-' + mes + '-01';
-                var ultimoDia;
-                if (mes === '02') {
-                    // Febrero: año bisiesto
-                    var esBisiesto = (anio % 4 === 0 && (anio % 100 !== 0 || anio % 400 === 0));
-                    ultimoDia = anio + '-' + mes + '-' + (esBisiesto ? '29' : '28');
-                } else if (["04","06","09","11"].includes(mes)) {
-                    ultimoDia = anio + '-' + mes + '-30';
-                } else {
-                    ultimoDia = anio + '-' + mes + '-31';
-                }
-                document.getElementById('fecha_inicio').value = primerDia;
-                document.getElementById('fecha_fin').value = ultimoDia;
-            }
-        };
-        </script>
     </div>
     <h3>Historial de Registros</h3>
     <div class="table-responsive">
@@ -266,132 +232,6 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
             <!-- Aquí se mostrará la venta total -->
         </div>
     </div>
-    <script>
-    // Confirmación al iniciar tiempo
-    document.querySelectorAll('.form-iniciar').forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            if (!confirm('¿Está seguro de INICIAR el tiempo de esta mesa?')) {
-                e.preventDefault();
-            }
-        });
-    });
-    // Confirmación al parar tiempo
-    document.querySelectorAll('.form-parar').forEach(function(form) {
-        form.addEventListener('submit', function(e) {
-            if (!confirm('¿Está seguro de PARAR el tiempo de esta mesa?')) {
-                e.preventDefault();
-            }
-        });
-    });
-    document.getElementById('btnVentaTotal').onclick = function() {
-        var pin = prompt('Ingrese el PIN para ver la venta total:');
-        if (pin === '8910') {
-            // Obtener la suma de los totales de la tabla
-            var suma = 0;
-            var filas = document.querySelectorAll('table tr');
-            for (var i = 1; i < filas.length; i++) {
-                var celdas = filas[i].getElementsByTagName('td');
-                if (celdas.length > 6) {
-                    var valor = celdas[6].textContent.replace(/[^0-9]/g, '');
-                    suma += parseInt(valor) || 0;
-                }
-            }
-            var div = document.getElementById('ventaTotalDia');
-            div.textContent = 'Venta total: $' + suma.toLocaleString('es-CO');
-            div.style.display = 'block';
-        } else if (pin !== null) {
-            alert('PIN incorrecto');
-        }
-    };
-    // SLIDER HORIZONTAL CÍCLICO EN MÓVIL CON DRAG
-    (function() {
-        function isMobile() {
-            return window.innerWidth <= 900;
-        }
-        var slider = document.getElementById('mesasSlider');
-        var controls = document.getElementById('sliderControls');
-        var cards = slider ? slider.getElementsByClassName('mesa') : [];
-        var total = cards.length;
-        var current = 0;
-        var startX = 0, deltaX = 0, dragging = false;
-        function showCard(idx) {
-            for (var i = 0; i < total; i++) {
-                cards[i].style.transform = 'translateX(' + ((i - idx) * 100) + '%)';
-                cards[i].style.visibility = (i === idx) ? 'visible' : 'hidden';
-                cards[i].style.position = (i === idx) ? 'relative' : 'absolute';
-            }
-        }
-        function nextCard() {
-            current = (current + 1) % total;
-            showCard(current);
-        }
-        function prevCard() {
-            current = (current - 1 + total) % total;
-            showCard(current);
-        }
-        function onDragStart(e) {
-            dragging = true;
-            startX = e.touches ? e.touches[0].clientX : e.clientX;
-            deltaX = 0;
-        }
-        function onDragMove(e) {
-            if (!dragging) return;
-            var x = e.touches ? e.touches[0].clientX : e.clientX;
-            deltaX = x - startX;
-        }
-        function onDragEnd() {
-            if (!dragging) return;
-            if (Math.abs(deltaX) > 50) {
-                if (deltaX < 0) nextCard();
-                else prevCard();
-            }
-            dragging = false;
-            deltaX = 0;
-        }
-        if (slider && controls && total > 1) {
-            function updateSliderMode() {
-                if (isMobile()) {
-                    controls.style.display = 'flex';
-                    slider.style.overflow = 'hidden';
-                    showCard(current);
-                    // Drag events
-                    slider.addEventListener('touchstart', onDragStart, {passive:true});
-                    slider.addEventListener('touchmove', onDragMove, {passive:true});
-                    slider.addEventListener('touchend', onDragEnd);
-                    slider.addEventListener('mousedown', onDragStart);
-                    slider.addEventListener('mousemove', onDragMove);
-                    slider.addEventListener('mouseup', onDragEnd);
-                    slider.addEventListener('mouseleave', onDragEnd);
-                } else {
-                    controls.style.display = 'none';
-                    for (var i = 0; i < total; i++) {
-                        cards[i].style.transform = '';
-                        cards[i].style.visibility = '';
-                        cards[i].style.position = '';
-                    }
-                    slider.style.overflow = '';
-                    // Remove drag events
-                    slider.removeEventListener('touchstart', onDragStart);
-                    slider.removeEventListener('touchmove', onDragMove);
-                    slider.removeEventListener('touchend', onDragEnd);
-                    slider.removeEventListener('mousedown', onDragStart);
-                    slider.removeEventListener('mousemove', onDragMove);
-                    slider.removeEventListener('mouseup', onDragEnd);
-                    slider.removeEventListener('mouseleave', onDragEnd);
-                }
-            }
-            document.getElementById('sliderNext').onclick = nextCard;
-            document.getElementById('sliderPrev').onclick = prevCard;
-            window.addEventListener('resize', updateSliderMode);
-            updateSliderMode();
-        }
-    })();
-    // Registrar el Service Worker para PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js');
-      });
-    }
-    </script>
+    <!-- JS modularizado: main.js, mesas.js, filtros.js, historial.js -->
 </body>
 </html>
