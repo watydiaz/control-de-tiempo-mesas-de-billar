@@ -233,5 +233,8 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
         </div>
     </div>
     <!-- JS modularizado: main.js, mesas.js, filtros.js, historial.js -->
+    <footer class="sticky-footer">
+        Desarrollado por Karol Diaz - Diaztecnologia | Todos los derechos reservados &copy; 2025
+    </footer>
 </body>
 </html>
