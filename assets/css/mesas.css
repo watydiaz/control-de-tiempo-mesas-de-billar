@@ -158,3 +158,44 @@
 		min-width: 46vw;
 	}
 }
+
+/* Modal de pedidos por mesa */
+.modal-pedidos {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.45);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+}
+.modal-pedidos.active {
+    display: flex;
+}
+.modal-pedidos .modal-content {
+    background: #fffbe6;
+    padding: 32px 24px;
+    border-radius: 12px;
+    max-width: 420px;
+    width: 90vw;
+    box-shadow: 0 2px 18px #fbff14;
+    position: relative;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#cerrarModalPedidos {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: #fbff14;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 1.3em;
+    font-weight: bold;
+    cursor: pointer;
+}

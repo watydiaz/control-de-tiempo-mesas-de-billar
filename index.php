@@ -111,7 +111,7 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
         $clase = $en_uso ? 'activa' : 'inactiva';
         $img = $imagenes_mesas[$i];
     ?>
-    <div class="mesa <?php echo $clase; ?>"<?php if ($en_uso) echo ' data-hora-inicio="' . htmlspecialchars($m['hora_inicio']) . '"'; ?>>
+    <div class="mesa <?php echo $clase; ?>"<?php if ($en_uso) echo ' data-hora-inicio="' . htmlspecialchars($m['hora_inicio']) . '"'; ?> >
         <h3>Mesa <?php echo $i; ?></h3>
         <img src="<?php echo htmlspecialchars($img); ?>" alt="Imagen Mesa <?php echo $i; ?>">
         <?php if (!$en_uso): ?>
@@ -120,6 +120,7 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
                 <input type="hidden" name="accion" value="iniciar">
                 <button type="submit" class="btn-iniciar">Iniciar Tiempo</button>
             </form>
+            <button class="btn-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fffbe6;color:#111;border:2px solid #fbff14;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-bottom:6px;">Ver pedidos</button>
         <?php else: ?>
             <div>Inicio: <?php echo date("g:i:s A", strtotime($m['hora_inicio'])); ?></div>
             <div class="contador" id="contador_<?php echo $i; ?>">00:00:00</div>
@@ -132,7 +133,7 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
                 <input type="hidden" name="accion" value="parar">
                 <button type="submit" class="btn-parar">Parar Tiempo</button>
             </form>
-            <!-- El contador y costo en tiempo real se moverán a mesas.js -->
+            <button class="btn-pedidos" data-mesa="<?php echo $i; ?>" style="background:#fffbe6;color:#111;border:2px solid #fbff14;border-radius:7px;padding:7px 18px;font-weight:bold;cursor:pointer;margin-bottom:6px;">Ver pedidos</button>
         <?php endif; ?>
         <?php if ($m && $m['hora_fin']): ?>
             <div>Fin: <?php echo date("g:i:s A", strtotime($m['hora_fin'])); ?></div>
@@ -232,9 +233,21 @@ $registros = $conn->query("SELECT * FROM mesas $where ORDER BY id DESC");
             <!-- Aquí se mostrará la venta total -->
         </div>
     </div>
+    <!-- Modal de pedidos por mesa -->
+    <div id="modalPedidos" class="modal-pedidos" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center;">
+        <div class="modal-content" style="background:#fffbe6;padding:32px 24px;border-radius:12px;max-width:420px;width:90vw;box-shadow:0 2px 18px #fbff14;position:relative;">
+            <button id="cerrarModalPedidos" style="position:absolute;top:12px;right:12px;background:#fbff14;border:none;border-radius:50%;width:32px;height:32px;font-size:1.3em;font-weight:bold;cursor:pointer;">&times;</button>
+            <h3 style="color:#111;margin-bottom:18px;">Pedidos por rondas - Mesa <span id="modalMesaNum"></span></h3>
+            <div id="modalPedidosLista" style="min-height:80px;color:#111;font-size:1.08em;">No hay pedidos registrados aún.</div>
+            <!-- Aquí se mostrarán los pedidos por rondas -->
+        </div>
+    </div>
     <!-- JS modularizado: main.js, mesas.js, filtros.js, historial.js -->
     <footer class="sticky-footer">
         Desarrollado por Karol Diaz - Diaztecnologia | Todos los derechos reservados &copy; 2025
     </footer>
+    <script>
+    // El JS para el modal de pedidos está modularizado en assets/js/mesas.js
+    </script>
 </body>
 </html>

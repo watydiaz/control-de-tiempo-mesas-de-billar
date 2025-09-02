@@ -24,4 +24,22 @@ $(document).ready(function() {
         actualizar();
         setInterval(actualizar, 1000);
     });
+    
+    // Modal de pedidos por mesa
+    $('.btn-pedidos').on('click', function(){
+        var mesa = $(this).data('mesa');
+        $('#modalMesaNum').text(mesa);
+        // Aquí se cargarían los pedidos reales por AJAX en el futuro
+        $('#modalPedidosLista').html('No hay pedidos registrados aún.');
+        $('#modalPedidos').fadeIn(180);
+    });
+    $('#cerrarModalPedidos').on('click', function(){
+        $('#modalPedidos').fadeOut(120);
+    });
+    // Cerrar modal al hacer click fuera del contenido
+    $('#modalPedidos').on('click', function(e){
+        if(e.target === this){
+            $(this).fadeOut(120);
+        }
+    });
 });
